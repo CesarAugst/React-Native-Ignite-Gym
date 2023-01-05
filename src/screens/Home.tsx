@@ -7,7 +7,7 @@ import { ExerciseCard } from '@components/ExerciseCard';
 export function Home(){
     const [exercises, setExercises] = useState(['Puxada Frontal', 'Remada Curvada', 'Remada Unilateral', 'Levantamento Terra']); 
     const [groups, setGroups] = useState(['Costas', 'Biceps', 'Triceps', 'Ombro']);
-    const [groupSelected, setGroupSelected] = useState('costa');
+    const [groupSelected, setGroupSelected] = useState('costas');
     return(
         <VStack flex={1}>
             <HomeHeader />
@@ -23,7 +23,7 @@ export function Home(){
                 renderItem={({ item }) => (
                     <Group 
                         name={item}
-                        isActive={groupSelected === item}
+                        isActive={groupSelected.toLocaleUpperCase() === item.toLocaleUpperCase()}
                         onPress={() => setGroupSelected(item)}
                     />
                 )}
