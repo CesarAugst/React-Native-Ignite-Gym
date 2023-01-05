@@ -5,6 +5,7 @@ import { HStack, VStack, FlatList, Heading, Text } from 'native-base';
 import { ExerciseCard } from '@components/ExerciseCard';
 
 export function Home(){
+    const [exercises, setExercises] = useState(['Puxada Frontal', 'Remada Curvada', 'Remada Unilateral', 'Levantamento Terra']); 
     const [groups, setGroups] = useState(['Costas', 'Biceps', 'Triceps', 'Ombro']);
     const [groupSelected, setGroupSelected] = useState('costa');
     return(
@@ -34,10 +35,19 @@ export function Home(){
                         Exercicios
                     </Heading>
                     <Text color="gray.200" fontSize="sm">
-                        4
+                        {exercises.length}
                     </Text>
                 </HStack>
-                <ExerciseCard />
+                
+                <FlatList 
+                    data={exercises}
+                    keyExtractor={item => item}
+                    showsVerticalScrollIndicator={false}
+                    _contentContainerStyle={{paddingBottom: 20}}
+                    renderItem={({item}) => (
+                        <ExerciseCard />
+                    )}
+                />
             </VStack>
         </VStack>
     );
