@@ -2,8 +2,11 @@ import axios from "axios";
 
 import { AppError } from "@utils/AppError";
 
+const ip = '192.168.15.4';
+//const ip = '192.168.15.177';
+
 const api = axios.create({
-    baseURL: 'http://192.168.15.177:3333',
+    baseURL: `http://${ip}:3333`,
 
 });
 
