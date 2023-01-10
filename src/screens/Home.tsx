@@ -10,8 +10,10 @@ import { Group } from '@components/Group';
 import { HomeHeader } from '@components/HomeHeader';
 import { ExerciseCard } from '@components/ExerciseCard';
 import { ExerciseDTO } from '@dtos/ExerciseDTO';
+import { Loading } from '@components/Loading';
 
 export function Home(){
+    const [isLoading, setIsLoading] = useState(true);
     const [exercises, setExercises] = useState<ExerciseDTO[]>([]); 
     const [groups, setGroups] = useState<string[]>([]);
     const [groupSelected, setGroupSelected] = useState('costas');
@@ -19,8 +21,8 @@ export function Home(){
     const toast = useToast();
     const navigation = useNavigation<AppNavigatorRoutesProps>();
 
-    function handleOpenExerciseDetails(){
-        navigation.navigate('exercise');
+    function handleOpenExerciseDetails(exerciseId: string){
+        navigation.navigate('exercise', {exerciseId});
     }
 
     async function fetchGroups(){
@@ -41,7 +43,7 @@ export function Home(){
         try {
             const response = await api.get(`/exercises/bygroup/${groupSelected}`);
             setExercises(response.data);
-            
+            setIsLoading(true);
         } catch (error) {
             const isAppError = error instanceof AppError;
             const title = isAppError ? error.message : 'Nao foi possivel carregar os exercicios';
@@ -49,6 +51,8 @@ export function Home(){
             toast.show({
                 title, placement: 'top', bgColor: 'red.500'
             });
+        }finally{
+            setIsLoading(false);
         }
     }
 
@@ -81,30 +85,33 @@ export function Home(){
                     />
                 )}
             />
-
-            <VStack flex={1} px={8}>
-                <HStack justifyContent="space-between" mb={5}>
-                    <Heading color="gray.200" fontSize="md" fontFamily="heading">
-                        Exercicios
-                    </Heading>
-                    <Text color="gray.200" fontSize="sm">
-                        {exercises.length}
-                    </Text>
-                </HStack>
-                
-                <FlatList 
-                    data={exercises}
-                    keyExtractor={item => item.id}
-                    showsVerticalScrollIndicator={false}
-                    _contentContainerStyle={{paddingBottom: 20}}
-                    renderItem={({item}) => (
-                        <ExerciseCard 
-                            onPress={handleOpenExerciseDetails}
-                            data={item}
-                        />
-                    )}
-                />
-            </VStack>
+            {
+                isLoading ?
+                <Loading/>:
+                <VStack flex={1} px={8}>
+                    <HStack justifyContent="space-between" mb={5}>
+                        <Heading color="gray.200" fontSize="md" fontFamily="heading">
+                            Exercicios
+                        </Heading>
+                        <Text color="gray.200" fontSize="sm">
+                            {exercises.length}
+                        </Text>
+                    </HStack>
+                    
+                    <FlatList 
+                        data={exercises}
+                        keyExtractor={item => item.id}
+                        showsVerticalScrollIndicator={false}
+                        _contentContainerStyle={{paddingBottom: 20}}
+                        renderItem={({item}) => (
+                            <ExerciseCard 
+                                onPress={() => handleOpenExerciseDetails(item.id)}
+                                data={item}
+                            />
+                        )}
+                    />
+                </VStack>
+            }
         </VStack>
     );
 }
