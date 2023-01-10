@@ -1,23 +1,65 @@
-import { useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { HStack, VStack, FlatList, Heading, Text } from 'native-base';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { HStack, VStack, FlatList, Heading, Text, useToast } from 'native-base';
 
+import { api } from '@services/api';
 import { AppNavigatorRoutesProps } from '@routes/app.routes';
+import { AppError } from '@utils/AppError';
 
 import { Group } from '@components/Group';
 import { HomeHeader } from '@components/HomeHeader';
 import { ExerciseCard } from '@components/ExerciseCard';
+import { ExerciseDTO } from '@dtos/ExerciseDTO';
 
 export function Home(){
-    const [exercises, setExercises] = useState(['Puxada Frontal', 'Remada Curvada', 'Remada Unilateral', 'Levantamento Terra']); 
-    const [groups, setGroups] = useState(['Costas', 'Biceps', 'Triceps', 'Ombro']);
+    const [exercises, setExercises] = useState<ExerciseDTO[]>([]); 
+    const [groups, setGroups] = useState<string[]>([]);
     const [groupSelected, setGroupSelected] = useState('costas');
 
+    const toast = useToast();
     const navigation = useNavigation<AppNavigatorRoutesProps>();
 
     function handleOpenExerciseDetails(){
         navigation.navigate('exercise');
     }
+
+    async function fetchGroups(){
+        try {
+            const response = await api.get('/groups');
+            setGroups(response.data);
+        } catch (error) {
+            const isAppError = error instanceof AppError;
+            const title = isAppError ? error.message : 'Nao foi possivel carregar os grupos musculares';
+
+            toast.show({
+                title, placement: 'top', bgColor: 'red.500'
+            });
+        }
+    }
+
+    async function fetchExercisesByGroup(){
+        try {
+            const response = await api.get(`/exercises/bygroup/${groupSelected}`);
+            setExercises(response.data);
+            
+        } catch (error) {
+            const isAppError = error instanceof AppError;
+            const title = isAppError ? error.message : 'Nao foi possivel carregar os exercicios';
+
+            toast.show({
+                title, placement: 'top', bgColor: 'red.500'
+            });
+        }
+    }
+
+    useEffect(() => {
+        fetchGroups();
+    }, []);
+
+    useFocusEffect(useCallback(() => {
+        fetchExercisesByGroup();
+    }, [groupSelected]))
+
     return(
         <VStack flex={1}>
             <HomeHeader />
@@ -52,12 +94,13 @@ export function Home(){
                 
                 <FlatList 
                     data={exercises}
-                    keyExtractor={item => item}
+                    keyExtractor={item => item.id}
                     showsVerticalScrollIndicator={false}
                     _contentContainerStyle={{paddingBottom: 20}}
                     renderItem={({item}) => (
                         <ExerciseCard 
                             onPress={handleOpenExerciseDetails}
+                            data={item}
                         />
                     )}
                 />
