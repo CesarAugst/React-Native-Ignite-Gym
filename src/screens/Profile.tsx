@@ -9,10 +9,13 @@ import * as yup from 'yup';
 
 import { useAuth } from '@hooks/useAuth';
 
+import { api } from '@services/api';
+
 import { ScreenHeader } from '@components/ScreenHeader';
 import { UserPhoto } from '@components/UserPhoto';
 import { Button } from '@components/Button';
 import { Input } from '@components/Input';
+import { AppError } from '@utils/AppError';
 
 const PHOTO_SIZE = 33;
 
@@ -49,11 +52,12 @@ const profileSchema = yup.object({
 })
 
 export function Profile() {
+    const [isUpdating, setIsUpdating] = useState(false);
     const [photoIsLoading, setPhotoIsLoading] = useState(false);
     const [userPhoto, setUserPhoto] = useState('https://github.com/cesaraugst.png');
 
     const toast = useToast();
-    const { user } = useAuth();
+    const { user, updateUserProfile } = useAuth();
     const { control, handleSubmit, formState: { errors } } = useForm<FormDataProps>({
         defaultValues:{
             name: user.name,
@@ -97,8 +101,33 @@ export function Profile() {
     }
 
     async function handleProfileUpdate(data: FormDataProps){
-        console.log(data)
+        try {
+            setIsUpdating(true);
 
+            const userUpdated = user;
+            userUpdated.name = data.name;
+
+            await api.put('/users', data)
+            await updateUserProfile(userUpdated);
+
+            toast.show({
+                title: 'Perfil atualizado',
+                placement: 'top',
+                bgColor: 'green.500'
+            })
+    
+        } catch (error) {
+            const isAppError = error instanceof AppError; 
+            const title = isAppError ? error.message : 'Nao foi possivel atualizar os dados'
+
+            toast.show({
+                title,
+                placement: 'top',
+                bgColor: 'red.500',
+            })
+        }finally{
+            setIsUpdating(false);
+        }
     }
 
     return (
@@ -192,6 +221,7 @@ export function Profile() {
                     <Button title='Atulizar'
                         mt={4}
                         onPress={handleSubmit(handleProfileUpdate)}
+                        isLoading={isUpdating}
                     />
                 </Center>
             </ScrollView>
