@@ -11,6 +11,8 @@ import { useAuth } from '@hooks/useAuth';
 
 import { api } from '@services/api';
 
+import defaultUserPhotoImg from '@assets/userPhotoDefault.png';
+
 import { ScreenHeader } from '@components/ScreenHeader';
 import { UserPhoto } from '@components/UserPhoto';
 import { Button } from '@components/Button';
@@ -54,7 +56,6 @@ const profileSchema = yup.object({
 export function Profile() {
     const [isUpdating, setIsUpdating] = useState(false);
     const [photoIsLoading, setPhotoIsLoading] = useState(false);
-    const [userPhoto, setUserPhoto] = useState('https://github.com/cesaraugst.png');
 
     const toast = useToast();
     const { user, updateUserProfile } = useAuth();
@@ -102,11 +103,15 @@ export function Profile() {
                 const userPhotoUploadForm = new FormData();
                 userPhotoUploadForm.append('avatar', photoFile);
 
-                await api.patch('/users/avatar', userPhotoUploadForm, {
+                const avatarUpdatedResponse = await api.patch('/users/avatar', userPhotoUploadForm, {
                     headers: {
                         'Content-type': 'multipart/form-data'
                     }
-                })
+                });
+
+                const userUpdated = user;
+                userUpdated.avatar = avatarUpdatedResponse.data.avatar;
+                updateUserProfile(userUpdated);
 
                 toast.show({
                     title: 'Foto atualizada!',
@@ -169,7 +174,11 @@ export function Profile() {
                             />
                             :
                             <UserPhoto
-                                source={{ uri: userPhoto}}
+                                source={
+                                    user.avatar
+                                    ? { uri: `${api.defaults.baseURL}/avatar/${user.avatar}`}
+                                    : defaultUserPhotoImg
+                                }
                                 alt="Foto do usuario"
                                 size={PHOTO_SIZE}
                             />
